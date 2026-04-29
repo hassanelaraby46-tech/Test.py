@@ -3,30 +3,23 @@ import pandas as pd
 from xlsxwriter.utility import xl_col_to_name
 import calendar
 import datetime
+import io
+st.set_page_config(page_title="Shift Distribution System", page_icon="📅")
+
+st.title("📅 Shift Distribution System")
+st.markdown("قم بإدخال أسماء الموظفين لتوليد جدول المناوبات تلقائياً لعام 2026.")
 
 # جلب التاريخ الحالي تلقائياً (أبريل 2026)
 now = datetime.datetime.now()
-year = now.year    
-month = now.month  
+year = st.sidebar.number_input("Year", min_value=2024, max_value=2030, value=2026)
+month = st.sidebar.selectbox("Month", range(1, 13), index=now.month - 1)
+names_input = st.text_area("Enter Staff Names (Each name on a new line):", height=150)
+names = [name.strip() for name in names_input.split('\n') if name.strip()]
 
-print(f"--- SHIFTS DISTRIBUTION SYSTEM ({calendar.month_name[month]} {year}) ---")
-print("ENTER STAFF NAMES (TYPE 'DONE' TO FINISH):")
-
-names = []
-while True:
-    name_input = input("EMPLOYEE NAME: ").strip()
-    if name_input.lower() == 'done': 
-        if not names:
-            print("⚠️ WARNING! ENTER AT LEAST 1 NAME.")
-            continue
-        break
-    
-    if name_input in names:
-        print(f"⚠️ {name_input} IS ALREADY ADDED!")
-    elif name_input:
-        names.append(name_input)
-        print(f"✅ ADDED: {name_input} (TOTAL: {len(names)})")
-
+if st.button("Generate Schedule"):
+    if not names:
+        st.error("Please enter at least one name!")
+    else:
 # تعريف المناوبات والساعات
 shifts = ['M', 'L', 'L', 'N', 'N', 'O', 'O']
 num_days = calendar.monthrange(year, month)[1] 
@@ -45,14 +38,12 @@ for i, name in enumerate(names):
 df = pd.DataFrame(data)
 df['names'] = pd.Categorical(df['names'], categories=names, ordered=True)
 df_H = df.pivot(index=['Date', 'day'], columns='names', values='shifts')
+output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df_H.to_excel(writer, index=True, sheet_name='Schedule')
+            workbook = writer.book
+            worksheet = writer.sheets['Schedule']
 
-# إنشاء ملف الإكسيل
-file_name = f'Roster_{calendar.month_name[month]}_{year}.xlsx'
-writer = pd.ExcelWriter(file_name, engine='xlsxwriter')
-df_H.to_excel(writer, index=True, sheet_name='Schedule')
-
-worksheet = writer.sheets['Schedule']
-workbook  = writer.book
 
 # التنسيقات (Formats)
 format_M = workbook.add_format({'bg_color': '#CFE2F3', 'font_color': '#0B5394', 'border': 1})
@@ -96,6 +87,15 @@ for i, _ in enumerate(names):
 # تجميد الألواح لسهولة التصفح
 worksheet.freeze_panes(1, 2)
 
-writer.close()
-print(f"\n🎉 DONE! File saved as: {file_name}")
-  
+processed_data = output.getvalue()
+
+        # --- عرض النتيجة وزر التحميل ---
+        st.success("Schedule generated successfully!")
+        st.dataframe(df_H) # عرض الجدول في الصفحة
+        
+        st.download_button(
+            label="📥 Download Excel File",
+            data=processed_data,
+            file_name=f"Roster_{calendar.month_name[month]}_{year}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
