@@ -19,7 +19,7 @@ names = [name.strip() for name in names_input.split('\n') if name.strip()]
 if st.button("Generate Schedule"):
     if not names:
         st.error("Please enter at least one name!")
-    else:
+    
 # تعريف المناوبات والساعات
 shifts = ['M', 'L', 'L', 'N', 'N', 'O', 'O']
 num_days = calendar.monthrange(year, month)[1] 
