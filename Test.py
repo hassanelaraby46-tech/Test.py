@@ -39,7 +39,7 @@ df = pd.DataFrame(data)
 df['names'] = pd.Categorical(df['names'], categories=names, ordered=True)
 df_H = df.pivot(index=['Date', 'day'], columns='names', values='shifts')
 output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
             df_H.to_excel(writer, index=True, sheet_name='Schedule')
             workbook = writer.book
             worksheet = writer.sheets['Schedule']
