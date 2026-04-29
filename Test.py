@@ -90,10 +90,10 @@ worksheet.freeze_panes(1, 2)
 processed_data = output.getvalue()
 
         # --- عرض النتيجة وزر التحميل ---
-        st.success("Schedule generated successfully!")
-        st.dataframe(df_H) # عرض الجدول في الصفحة
+st.success("Schedule generated successfully!")
+st.dataframe(df_H) # عرض الجدول في الصفحة
         
-        st.download_button(
+st.download_button(
             label="📥 Download Excel File",
             data=processed_data,
             file_name=f"Roster_{calendar.month_name[month]}_{year}.xlsx",
